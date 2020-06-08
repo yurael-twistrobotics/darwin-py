@@ -2,6 +2,7 @@ import argparse
 import datetime
 import shutil
 import sys
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -56,7 +57,7 @@ def authenticate(api_key: str, default_team: Optional[bool] = None, datasets_dir
 
     try:
         client = Client.from_api_key(api_key=api_key)
-        config_path = Path.home() / ".darwin" / "config.yaml"
+        config_path = _config_path()
         config_path.parent.mkdir(exist_ok=True)
 
         if default_team is None:
@@ -70,7 +71,7 @@ def authenticate(api_key: str, default_team: Optional[bool] = None, datasets_dir
         client.set_datasets_dir(datasets_dir)
 
         default_team = client.default_team if default_team else None
-        return persist_client_configuration(client, default_team=default_team)
+        return persist_client_configuration(client, default_team=default_team, config_path=config_path)
 
     except InvalidLogin:
         _error("Invalid API key")
@@ -529,8 +530,7 @@ def _load_client(team: Optional[str] = None, offline: bool = False):
     The client requested
     """
     try:
-        config_dir = Path.home() / ".darwin" / "config.yaml"
-        client = Client.from_config(config_dir, team_slug=team)
+        client = Client.from_config(_config_path(), team_slug=team)
         return client
     except MissingConfig:
         _error("Authenticate first")
@@ -538,3 +538,7 @@ def _load_client(team: Optional[str] = None, offline: bool = False):
         _error("Please re-authenticate")
     except Unauthenticated:
         _error("Please re-authenticate")
+
+
+def _config_path():
+    return Path(os.getenv("DARWIN_CONFIG", Path.home() / ".darwin" / "config.yaml"))
