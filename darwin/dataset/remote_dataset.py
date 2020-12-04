@@ -242,8 +242,10 @@ class RemoteDataset:
                     annotation = json.load(annotation_path.open())
                     filename = Path(annotation["image"]["filename"]).stem
                     destination_name = annotations_dir / f"{filename}{annotation_path.suffix}"
-                    shutil.move(str(annotation_path), str(destination_name))
-
+                    try:
+                        shutil.move(str(annotation_path), str(destination_name))
+                    except:
+                        print(f"warning skipping: {destination_name}")
         # Extract the list of classes and create the text files
         make_class_lists(release_dir)
 
