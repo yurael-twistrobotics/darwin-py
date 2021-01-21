@@ -63,18 +63,22 @@ def parse_annotation(annotation, category_lookup_table):
         if len(segmentation) == 0 and len(annotation["bbox"]) == 4:
             x, y, w, h = map(int, annotation["bbox"])
             return dt.make_bounding_box(category["name"], x, y, w, h)
-        elif len(segmentation) == 1:
-            path = []
-            points = iter(segmentation[0])
-            while True:
-                try:
-                    x, y = next(points), next(points)
-                    path.append({"x": x, "y": y})
-                except StopIteration:
-                    break
-            return dt.make_polygon(category["name"], path)
-        else:
-            return None
+        else: 
+            paths = []
+            for i in range(len(segmentation)):
+                path = []
+                points = iter(segmentation[i])
+                while True:
+                    try:
+                        x, y = next(points), next(points)
+                        path.append({"x": x, "y": y})
+                    except StopIteration:
+                        break
+                paths.append(path)
+            if len(paths) == 1:
+                return dt.make_polygon(category["name"], path)
+            else:
+                return dt.make_complex_polygon(category["name"], paths)
 
 
 def rle_decoding(counts, shape):
