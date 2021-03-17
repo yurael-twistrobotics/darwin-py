@@ -202,6 +202,11 @@ def _delayed_upload_function(
     """
     file_path = _resolve_path(file["original_filename"], files_path)
     s3_response = upload_file_to_s3(client, file, file_path, team)
+    if s3_response.status_code != 201:
+        print("==DEBUG==")
+        print(s3_response)
+        print(s3_response.content)
+
     image_id = file["id"]
     backend_response = client.put(endpoint=f"/{endpoint_prefix}/{image_id}/confirm_upload", payload={}, team=team)
     return {

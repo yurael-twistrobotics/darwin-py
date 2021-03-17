@@ -67,7 +67,7 @@ class RemoteDataset:
         self,
         files_to_upload: List[str],
         blocking: bool = True,
-        multi_threaded: bool = True,
+        multi_threaded: bool = False,
         fps: int = 1,
         as_frames: bool = False,
         files_to_exclude: Optional[List[str]] = None,
