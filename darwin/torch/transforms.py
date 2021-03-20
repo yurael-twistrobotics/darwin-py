@@ -192,3 +192,42 @@ class ConvertPolygonToMask(object):
             target = torch.zeros((h, w), dtype=torch.uint8)
         target = Image.fromarray(target.numpy())
         return image, target
+
+
+class ConvertBoundingBoxes(object):
+    def __call__(self, image: Image, target: TargetType):
+        w, h = image.size
+
+        image_id = target["image_id"]
+        image_id = torch.tensor([image_id])
+
+        annotations = target.pop("annotations")
+
+        annotations = [obj for obj in annotations if obj.get("iscrowd", 0) == 0]
+
+        boxes = [obj["bbox"] for obj in annotations]
+        # guard against no boxes via resizing
+        boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
+        boxes[:, 2:] += boxes[:, :2]
+        boxes[:, 0::2].clamp_(min=0, max=w)
+        boxes[:, 1::2].clamp_(min=0, max=h)
+
+        classes = [obj["category_id"] for obj in annotations]
+        classes = torch.tensor(classes, dtype=torch.int64)
+
+        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        boxes = boxes[keep]
+        classes = classes[keep]
+        masks = masks[keep]
+
+        target["boxes"] = boxes
+        target["labels"] = classes
+        target["image_id"] = image_id
+
+        # conversion to coco api
+        area = torch.tensor([obj["area"] for obj in annotations])
+        iscrowd = torch.tensor([obj.get("iscrowd", 0) for obj in annotations])
+        target["area"] = area
+        target["iscrowd"] = iscrowd
+
+        return image, target

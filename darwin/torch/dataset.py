@@ -5,7 +5,7 @@ import numpy as np
 from darwin.cli_functions import _error, _load_client
 from darwin.dataset import LocalDataset
 from darwin.dataset.identifier import DatasetIdentifier
-from darwin.torch.transforms import Compose, ConvertPolygonsToInstanceMasks, ConvertPolygonsToSemanticMask
+from darwin.torch.transforms import Compose, ConvertBoundingBoxes, ConvertPolygonsToInstanceMasks, ConvertPolygonsToSemanticMask
 from darwin.torch.utils import polygon_area
 from darwin.utils import convert_polygons_to_sequences
 
@@ -301,6 +301,91 @@ class SemanticSegmentationDataset(LocalDataset):
             if not sequences:
                 continue
             annotations.append({"category_id": self.classes.index(obj["name"]), "segmentation": sequences})
+        target["annotations"] = annotations
+
+        return target
+
+    def measure_weights(self, **kwargs):
+        """
+        Computes the class balancing weights (not the frequencies!!) given the train loader
+        Get the weights proportional to the inverse of their class frequencies.
+        The vector sums up to 1
+
+        Returns
+        -------
+        class_weights : ndarray[double]
+            Weight for each class in the train set (one for each class) as a 1D array normalized
+        """
+        # Collect all the labels by iterating over the whole dataset
+        labels = []
+        for i, _ in enumerate(self.images_path):
+            target = self.get_target(i)
+            labels.extend([a["category_id"] for a in target["annotations"]])
+        return self._compute_weights(labels)
+
+
+class ObjectDetectionDataset(LocalDataset):
+    def __init__(self, transform: Optional[List] = None, **kwargs):
+        """
+        See `LocalDataset` class for documentation
+        """
+        super().__init__(annotation_type="bounding_box", **kwargs)
+
+        self.transform = transform
+        if self.transform is not None and isinstance(self.transform, list):
+            self.transform = Compose(self.transform)
+
+        self.convert_bounding_boxes = ConvertBoundingBoxes()
+
+    def __getitem__(self, index: int):
+        """
+        Notes
+        -----
+        The return value is a dict with the following fields:
+            image_id : int
+                Index of the image inside the dataset
+            image_path: str
+                The path to the image on the file system
+            labels : tensor(n)
+                The class label of each one of the instances
+            boxes : tensor(n, 4)
+                Coordinates of the bounding box enclosing the instances as [x, y, x, y]
+            area : float
+                Area in pixels of each one of the instances
+        """
+        img = self.get_image(index)
+        target = self.get_target(index)
+
+        img, target = self.convert_bounding_boxes(img, target)
+        if self.transform is not None:
+            img, target = self.transform(img, target)
+
+        return img, target
+
+    def get_target(self, index: int):
+        """
+        Returns the instance segmentation target
+        """
+        target = self.parse_json(index)
+
+        annotations = []
+        for annotation in target["annotations"]:
+            if "bounding_box" not in annotation:
+                print(f"Warning: missing bounding box in annotation {self.annotations_path[index]}")
+            bounding_box = annotation["bounding_box"]
+            # Compute the area of the bounding box
+            area = bounding_box["w"] * bounding_box["h"]
+            if area <= 0:
+                print(f"Warning: area of bounding box {bounding_box} (index {index}) is <= 0: {area}")
+
+            # Create and append the new entry for this annotation
+            annotations.append(
+                {
+                    "category_id": self.classes.index(annotation["name"]),
+                    "bbox": [bounding_box["x"], bounding_box["y"], bounding_box["w"], bounding_box["h"]],
+                    "area": area
+                }
+            )
         target["annotations"] = annotations
 
         return target
