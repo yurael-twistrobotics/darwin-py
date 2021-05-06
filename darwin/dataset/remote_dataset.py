@@ -147,7 +147,8 @@ class RemoteDataset:
 
         # If blocking is selected, upload the dataset remotely
         if blocking:
-            responses = exhaust_generator(progress=progress, count=count, multi_threaded=multi_threaded)
+            responses = exhaust_generator(progress=progress, count=count, multi_threaded=False)
+            print(responses)
             # Log responses to file
             if responses:
                 responses = [{k: str(v) for k, v in response.items()} for response in responses]
