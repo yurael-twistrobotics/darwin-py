@@ -28,6 +28,7 @@ def upload(url, data, files, retry=False, raise_on_error=False):
                 raise e
 
 
+# you define the interface here
 class TrainHandler:
     def __init__(self, action):
         self.action = action

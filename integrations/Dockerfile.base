@@ -1,0 +1,23 @@
+FROM pytorch/pytorch:1.9.0-cuda10.2-cudnn7-runtime
+
+RUN apt-get -yq update && apt-get install -yqq --no-install-recommends \
+  # needed to install gust
+  git ssh \
+  # needed in case of opencv
+  libgl1 libglib2.0-0
+
+RUN mkdir /root/.ssh
+ADD docker /root/.ssh/docker
+
+RUN eval $(ssh-agent) && \
+  ssh-add /root/.ssh/docker && \
+  touch /root/.ssh/known_hosts && \
+  ssh-keyscan -H github.com >> /root/.ssh/known_hosts && \
+  git clone -q 'ssh://git@github.com/v7labs/gust.git' && \
+  cd gust && \
+  git checkout 999038edb26b8281e96a80f01a1a34b8f1ef9ae4 && \
+  pip install .
+
+RUN apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /root/.ssh
