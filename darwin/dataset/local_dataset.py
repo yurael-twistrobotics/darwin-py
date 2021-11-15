@@ -70,7 +70,8 @@ class LocalDataset(object):
         for stem in stems:
             annotation_path = annotations_dir / f"{stem}.json"
             images = []
-            for ext in SUPPORTED_IMAGE_EXTENSIONS:
+            all_extensions = SUPPORTED_IMAGE_EXTENSIONS + list(map(lambda s: s.upper(), SUPPORTED_IMAGE_EXTENSIONS))
+            for ext in all_extensions:
                 image_path = images_dir / f"{stem}{ext}"
                 if image_path.exists():
                     images.append(image_path)
