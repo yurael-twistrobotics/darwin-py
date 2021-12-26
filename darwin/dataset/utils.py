@@ -3,7 +3,7 @@ import json
 import multiprocessing as mp
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterator, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 import darwin.datatypes as dt
 import numpy as np
@@ -166,15 +166,15 @@ def _f(x: Any) -> Any:
         return x()
 
 
-def exhaust_generator(progress: Generator, count: int, multi_threaded: bool) -> List[Dict[str, Any]]:
+def exhaust_generator(progress: Iterator, count: int, multi_threaded: bool) -> List[Dict[str, Any]]:
     """Exhausts the generator passed as parameter. Can be done multi threaded if desired
 
     Parameters
     ----------
-    progress : Generator
-        Generator to exhaust
+    progress : Iterator
+        Iterator to exhaust
     count : int
-        Size of the generator
+        Size of the iterator
     multi_threaded : bool
         Flag for multi-threaded enabled operations
 
