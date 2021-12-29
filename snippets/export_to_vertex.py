@@ -133,7 +133,7 @@ configs = {
         milli_node_hours=20000,
         model_type="CLOUD_HIGH_ACCURACY_1",
         training_job_definition=trainingjob.definition.AutoMlImageObjectDetectionInputs,
-        training_task_definition="gs://google-cloud-aiplatform/schema/trainingjob/definition/automl_object_detection_1.0.0.yaml",
+        training_task_definition="gs://google-cloud-aiplatform/schema/trainingjob/definition/automl_image_object_detection_1.0.0.yaml",
     ),
 }
 
