@@ -12,6 +12,7 @@ from darwin.dataset.download_manager import download_all_images_from_annotations
 from darwin.dataset.utils import exhaust_generator
 from darwin.datatypes import ExportParser
 from darwin.exporter.formats.vertex_objdet import export as object_detection_parser
+from darwin.exporter.formats.vertex_objtrack import export as object_tracking_parser
 from darwin.exporter.formats.vertex_slc import export as single_label_parser
 from google.api_core.client_options import ClientOptions
 from google.cloud.aiplatform.gapic.schema import trainingjob
@@ -25,6 +26,9 @@ console = Console()
 
 @dataclass(frozen=True)
 class VertexConfig:
+    api_key: str
+    api_url: str
+    darwin_bucket: str
     export_key: str
     export_name: str
     export_parser: ExportParser
@@ -116,6 +120,9 @@ def create_training_pipeline(
 
 configs = {
     "single-label-classification": VertexConfig(
+        api_key="4xJxe-S.2TNKezgz1rycV1j_7a0pUL8JVhGZDxHc",
+        api_url="https://staging.v7labs.com/api/",
+        darwin_bucket="njord-experiments",
         export_key="exports/andreas-team/bird-species/andreas-team/bird-species@auto-1640014413.zip",
         export_name="bird-species-tags",
         export_parser=single_label_parser,
@@ -126,6 +133,9 @@ configs = {
         training_task_definition="gs://google-cloud-aiplatform/schema/trainingjob/definition/automl_image_classification_1.0.0.yaml",
     ),
     "object-detection": VertexConfig(
+        api_key="4xJxe-S.2TNKezgz1rycV1j_7a0pUL8JVhGZDxHc",
+        api_url="https://staging.v7labs.com/api/",
+        darwin_bucket="njord-experiments",
         export_key="exports/andreas-team/bird-species-boxes/andreas-team/bird-species-boxes@auto-1632929310.zip",
         export_name="bird-species-bounding-boxes",
         export_parser=object_detection_parser,
@@ -135,18 +145,24 @@ configs = {
         training_job_definition=trainingjob.definition.AutoMlImageObjectDetectionInputs,
         training_task_definition="gs://google-cloud-aiplatform/schema/trainingjob/definition/automl_image_object_detection_1.0.0.yaml",
     ),
+    "object-tracking": VertexConfig(
+        api_key="93lt1gU.JWL6-OaiYEWgBq1QrYclbGxvq3-NeVRA",
+        api_url="https://darwin.v7labs.com/api/",
+        darwin_bucket="darwin-production-data",
+        export_key="exports/rockfishvision/accesscontrol-test-videos/test-v0.0.3.zip",
+        export_name="rv-people",
+        export_parser=object_tracking_parser,
+    ),
 }
 
 
 if __name__ == "__main__":
-    api_key = "4xJxe-S.2TNKezgz1rycV1j_7a0pUL8JVhGZDxHc"
-    api_url = "https://staging.v7labs.com/api/"
-    config = configs["object-detection"]
+    config = configs["object-tracking"]
 
     # 1. Download Darwin dataset export from AWS
 
     dataset_path = download_export(
-        bucket_name="njord-experiments", export_key=config.export_key, name=config.export_name
+        bucket_name=config.darwin_bucket, export_key=config.export_key, name=config.export_name
     )
 
     images_path = dataset_path / "images"
@@ -154,7 +170,9 @@ if __name__ == "__main__":
 
     # 2. Download all images beloging to that export
 
-    download_images(api_key=api_key, api_url=api_url, annotations_path=annotations_path, images_path=images_path)
+    download_images(
+        api_key=config.api_key, api_url=config.api_url, annotations_path=annotations_path, images_path=images_path
+    )
 
     # 3. Push images to Google Cloud Storage
 

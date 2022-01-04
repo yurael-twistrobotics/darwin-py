@@ -609,13 +609,15 @@ def upload_data(
 
         if already_existing_items:
             console.print(
-                f"Skipped {len(already_existing_items)} files already in the dataset.\n", style="warning",
+                f"Skipped {len(already_existing_items)} files already in the dataset.\n",
+                style="warning",
             )
 
         if upload_manager.error_count or other_skipped_items:
             error_count = upload_manager.error_count + len(other_skipped_items)
             console.print(
-                f"{error_count} files couldn't be uploaded because an error occurred.\n", style="error",
+                f"{error_count} files couldn't be uploaded because an error occurred.\n",
+                style="error",
             )
 
         if not verbose and upload_manager.error_count:
