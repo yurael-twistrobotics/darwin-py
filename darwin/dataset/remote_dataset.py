@@ -343,7 +343,7 @@ class RemoteDataset:
                 if latest_dir.is_symlink():
                     latest_dir.unlink()
 
-                target_link: Path = self.local_releases_path / release_dir.name
+                target_link: Path = release_dir.name
                 latest_dir.symlink_to(target_link)
             except OSError:
                 self.console.log(f"Could not mark release {release.name} as latest. Continuing...")
